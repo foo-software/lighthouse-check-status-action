@@ -46,7 +46,7 @@ jobs:
       with:
         urls: 'https://www.foo.software,https://www.foo.software/contact'
     - name: Handle Lighthouse Check results
-      uses: ./
+      uses: foo-software/lighthouse-check-status-action@master
       with:
         lighthouse-check-results: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
         minAccessibilityScore: 90
