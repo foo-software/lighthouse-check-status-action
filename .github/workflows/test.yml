@@ -6,7 +6,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - uses: actions/bin/debug@master
     - run: npm install
     - name: Run Lighthouse
       uses: foo-software/lighthouse-check-action@master

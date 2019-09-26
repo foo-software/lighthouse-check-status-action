@@ -84,7 +84,6 @@ try {
   const minProgressiveWebAppScore = normalizeInput(core.getInput('minProgressiveWebAppScore'));
   const minSeoScore = normalizeInput(core.getInput('minSeoScore'));
   const results = JSON.parse(core.getInput('lighthouseCheckResults'));
-  console.log('results', results);
 
   // if we need to fail when scores are too low...
   if (minAccessibilityScore || minBestPracticesScore
