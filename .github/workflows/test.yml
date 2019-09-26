@@ -16,7 +16,7 @@ jobs:
     - name: Handle Lighthouse Check results
       uses: ./
       with:
-        lighthouse-check-results: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+        lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
         minAccessibilityScore: 90
         minBestPracticesScore: 50
         minPerformanceScore: 50
