@@ -77,61 +77,32 @@ const getFailureMessages = ({
   ]), []);
 }
 
-  try {
-    const urls = normalizeInput(core.getInput('urls'));
+try {
+  const minAccessibilityScore = normalizeInput(core.getInput('minAccessibilityScore'));
+  const minBestPracticesScore = normalizeInput(core.getInput('minBestPracticesScore'));
+  const minPerformanceScore = normalizeInput(core.getInput('minPerformanceScore'));
+  const minProgressiveWebAppScore = normalizeInput(core.getInput('minProgressiveWebAppScore'));
+  const minSeoScore = normalizeInput(core.getInput('minSeoScore'));
 
-    const minAccessibilityScore = normalizeInput(core.getInput('minAccessibilityScore'));
-    const minBestPracticesScore = normalizeInput(core.getInput('minBestPracticesScore'));
-    const minPerformanceScore = normalizeInput(core.getInput('minPerformanceScore'));
-    const minProgressiveWebAppScore = normalizeInput(core.getInput('minProgressiveWebAppScore'));
-    const minSeoScore = normalizeInput(core.getInput('minSeoScore'));
-
-    const results = await lighthouseCheck({
-      author: normalizeInput(core.getInput('author')),
-      apiToken: normalizeInput(core.getInput('apiToken')),
-      awsAccessKeyId: normalizeInput(core.getInput('awsAccessKeyId')),
-      awsBucket: normalizeInput(core.getInput('awsBucket')),
-      awsRegion: normalizeInput(core.getInput('awsRegion')),
-      awsSecretAccessKey: normalizeInput(core.getInput('awsSecretAccessKey')),
-      branch: normalizeInput(core.getInput('branch')),
-      configFile: normalizeInput(core.getInput('configFile')),
-      emulatedFormFactor: normalizeInput(core.getInput('emulatedFormFactor')),
-      locale: normalizeInput(core.getInput('locale')),
-      help: normalizeInput(core.getInput('help')),
-      outputDirectory: normalizeInput(core.getInput('outputDirectory')),
-      pr: normalizeInput(core.getInput('pr')),
-      sha: normalizeInput(core.getInput('sha')),
-      slackWebhookUrl: normalizeInput(core.getInput('slackWebhookUrl')),
-      tag: normalizeInput(core.getInput('tag')),
-      timeout: normalizeInput(core.getInput('timeout')),
-      throttling: normalizeInput(core.getInput('throttling')),
-      throttlingMethod: normalizeInput(core.getInput('throttlingMethod')),
-      urls: !urls ? undefined : urls.split(','),
-      verbose: normalizeInput(core.getInput('verbose')),
-      wait: normalizeInput(core.getInput('wait'))
+  // if we need to fail when scores are too low...
+  if (minAccessibilityScore || minBestPracticesScore
+    || minPerformanceScore || minProgressiveWebAppScore || minSeoScore) {
+    const failures = getFailureMessages({
+      minAccessibilityScore,
+      minBestPracticesScore,
+      minPerformanceScore,
+      minProgressiveWebAppScore,
+      minSeoScore,
+      results
     });
 
-    console.log('results', results);
-
-    // if we need to fail when scores are too low...
-    if (minAccessibilityScore || minBestPracticesScore
-      || minPerformanceScore || minProgressiveWebAppScore || minSeoScore) {
-      const failures = getFailureMessages({
-        minAccessibilityScore,
-        minBestPracticesScore,
-        minPerformanceScore,
-        minProgressiveWebAppScore,
-        minSeoScore,
-        results
-      });
-
-      // if we have scores that were below the minimum requirement
-      if (failures.length) {
-        // comma-separate error messages and remove the last comma
-        const failureMessage = failures.join('\n');
-        throw new Error(`Minimum score requirements failed:\n${failureMessage}`);
-      }
+    // if we have scores that were below the minimum requirement
+    if (failures.length) {
+      // comma-separate error messages and remove the last comma
+      const failureMessage = failures.join('\n');
+      throw new Error(`Minimum score requirements failed:\n${failureMessage}`);
     }
-  } catch (error) {
-    core.setFailed(error.message);
   }
+} catch (error) {
+  core.setFailed(error.message);
+}
