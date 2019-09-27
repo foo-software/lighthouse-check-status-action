@@ -7,6 +7,16 @@ inputs:
   lighthouseCheckResults:
     description: 'A results object representing results of Lighthouse audits.'
     required: true
+  minAccessibilityScore:
+    description: 'The minimum accessibility Lighthouse score required.'
+  minBestPracticesScore:
+    description: 'The minimum best practices Lighthouse score required.'
+  minPerformanceScore:
+    description: 'The minimum performance Lighthouse score required.'
+  minProgressiveWebAppScore:
+    description: 'The minimum progressive web app Lighthouse score required.'
+  minSeoScore:
+    description: 'The minimum SEO Lighthouse score required.'
 runs:
   using: 'node12'
   main: 'index.js'
