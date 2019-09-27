@@ -1,8 +1,5 @@
 name: 'Lighthouse Check Status'
 description: 'A GitHub Action used to handle output from "foo-software/lighthouse-check-action" and determine workflow status.'
-branding:
-  icon: 'zap'  
-  color: 'green'
 inputs:
   lighthouseCheckResults:
     description: 'A results object representing results of Lighthouse audits.'
@@ -20,3 +17,6 @@ inputs:
 runs:
   using: 'node12'
   main: 'index.js'
+branding:
+  icon: 'zap'  
+  color: 'green'
