@@ -29,7 +29,7 @@ Each value of the inputs below can be used alone or together. If a score of any 
 
 ## Example usage
 
-In the below example we use [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action) to run audits and provide results as an output that we utilize in a following step.
+In the below example we use [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action) to run audits and provide results as an output utilized in the step after with this action.
 
 ```yaml
 name: Test Lighthouse Check Status
