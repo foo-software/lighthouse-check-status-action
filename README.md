@@ -6,26 +6,33 @@ This action is used with [Lighthouse Check action](https://github.com/foo-softwa
 
 Each value of the inputs below can be used alone or together. If a score of any Lighthouse audit ran by [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action) is lower than the value - the workflow will fail with an error message detailing which failed and scores.
 
-<table>
-  <tr>
-    <th>Name</th>
-  </tr>
-  <tr>
-    <td><code>minAccessibilityScore</code></td>
-  </tr>
-  <tr>
-    <td><code>minBestPracticesScore</code></td>
-  </tr>
-  <tr>
-    <td><code>minPerformanceScore</code></td>
-  </tr>
-  <tr>
-    <td><code>minProgressiveWebAppScore</code></td>
-  </tr>
-  <tr>
-    <td><code>minSeoScore</code></td>
-  </tr>
-</table>
+### `lighthouseCheckResults` (required)
+
+A results object representing results of Lighthouse audits. This comes from the output of [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action).
+
+### `minAccessibilityScore`
+
+The minimum accessibility Lighthouse score required.
+
+### `minAccessibilityScore`
+
+The minimum accessibility Lighthouse score required.
+
+### `minBestPracticesScore`
+
+The minimum best practices Lighthouse score required.
+
+### `minPerformanceScore`
+
+The minimum performance Lighthouse score required.
+
+### `minProgressiveWebAppScore`
+
+The minimum progressive web app Lighthouse score required.
+
+### `minSeoScore`
+
+The minimum SEO Lighthouse score required.
 
 ## Example usage
 
