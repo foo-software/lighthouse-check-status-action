@@ -14,10 +14,6 @@ A results object representing results of Lighthouse audits. This comes from the 
 
 The minimum accessibility Lighthouse score required.
 
-### `minAccessibilityScore`
-
-The minimum accessibility Lighthouse score required.
-
 ### `minBestPracticesScore`
 
 The minimum best practices Lighthouse score required.
