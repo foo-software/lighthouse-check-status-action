@@ -2,11 +2,7 @@
 
 This action is used with [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action) to determine status of running workflow. **Its main purpose is to fail the workflow if Lighthouse scores don't meet minimum requirements** as defined by inputs.
 
-> PR trigger
-
 <img alt="Lighthouse Check GitHub action fail if scores don't meet minimum requirement on a PR" src="https://lighthouse-check.s3.amazonaws.com/images/github-actions/github-action-lighthouse-check-status-action-pr-fail.png" />
-
-> Output
 
 <img alt="Lighthouse Check GitHub action fail if scores don't meet minimum requirement action output" src="https://lighthouse-check.s3.amazonaws.com/images/github-actions/github-action-lighthouse-check-status-action.png" />
 
