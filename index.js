@@ -16,19 +16,16 @@ const normalizeInput = input => {
   return input;
 };
 
-const getScoreFailMessage = ({
-  name,
-  url,
-  minScore,
-  score
-}) => {
+const getScoreFailMessage = ({ name, url, minScore, score }) => {
   // if inputs are not specified - assume we shouldn't fail
   if (!minScore || !score) {
     return [];
   }
 
   if (Number(score) < Number(minScore)) {
-    return [`${url}: ${name}: minimum score: ${minScore}, actual score: ${score}`];
+    return [
+      `${url}: ${name}: minimum score: ${minScore}, actual score: ${score}`
+    ];
   }
 
   return [];
@@ -42,52 +39,68 @@ const getFailureMessages = ({
   minSeoScore,
   results
 }) => {
-  return results.data.reduce((accumulator, current) => ([
-    ...accumulator,
-    ...(getScoreFailMessage({
-      name: 'Accessibility',
-      minScore: minAccessibilityScore,
-      score: current.scores.accessibility,
-      ...current
-    })),
-    ...(getScoreFailMessage({
-      name: 'Best Practices',
-      minScore: minBestPracticesScore,
-      score: current.scores.bestPractices,
-      ...current
-    })),
-    ...(getScoreFailMessage({
-      name: 'Performance',
-      minScore: minPerformanceScore,
-      score: current.scores.performance,
-      ...current
-    })),
-    ...(getScoreFailMessage({
-      name: 'Progressive Web App',
-      minScore: minProgressiveWebAppScore,
-      score: current.scores.progressiveWebApp,
-      ...current
-    })),
-    ...(getScoreFailMessage({
-      name: 'SEO',
-      minScore: minSeoScore,
-      score: current.scores.seo,
-      ...current
-    }))
-  ]), []);
-}
+  return results.data.reduce(
+    (accumulator, current) => [
+      ...accumulator,
+      ...getScoreFailMessage({
+        name: 'Accessibility',
+        minScore: minAccessibilityScore,
+        score: current.scores.accessibility,
+        ...current
+      }),
+      ...getScoreFailMessage({
+        name: 'Best Practices',
+        minScore: minBestPracticesScore,
+        score: current.scores.bestPractices,
+        ...current
+      }),
+      ...getScoreFailMessage({
+        name: 'Performance',
+        minScore: minPerformanceScore,
+        score: current.scores.performance,
+        ...current
+      }),
+      ...getScoreFailMessage({
+        name: 'Progressive Web App',
+        minScore: minProgressiveWebAppScore,
+        score: current.scores.progressiveWebApp,
+        ...current
+      }),
+      ...getScoreFailMessage({
+        name: 'SEO',
+        minScore: minSeoScore,
+        score: current.scores.seo,
+        ...current
+      })
+    ],
+    []
+  );
+};
 
 try {
-  const minAccessibilityScore = normalizeInput(core.getInput('minAccessibilityScore'));
-  const minBestPracticesScore = normalizeInput(core.getInput('minBestPracticesScore'));
-  const minPerformanceScore = normalizeInput(core.getInput('minPerformanceScore'));
-  const minProgressiveWebAppScore = normalizeInput(core.getInput('minProgressiveWebAppScore'));
+  const minAccessibilityScore = normalizeInput(
+    core.getInput('minAccessibilityScore')
+  );
+  const minBestPracticesScore = normalizeInput(
+    core.getInput('minBestPracticesScore')
+  );
+  const minPerformanceScore = normalizeInput(
+    core.getInput('minPerformanceScore')
+  );
+  const minProgressiveWebAppScore = normalizeInput(
+    core.getInput('minProgressiveWebAppScore')
+  );
   const minSeoScore = normalizeInput(core.getInput('minSeoScore'));
   const results = JSON.parse(core.getInput('lighthouseCheckResults'));
 
   // if we need to fail when scores are too low...
-  if (minAccessibilityScore || minBestPracticesScore
-    || minPerformanceScore || minProgressiveWebAppScore || minSeoScore) {
+  if (
+    minAccessibilityScore ||
+    minBestPracticesScore ||
+    minPerformanceScore ||
+    minProgressiveWebAppScore ||
+    minSeoScore
+  ) {
     const failures = getFailureMessages({
       minAccessibilityScore,
       minBestPracticesScore,

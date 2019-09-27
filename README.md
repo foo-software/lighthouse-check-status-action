@@ -39,19 +39,19 @@ jobs:
   lighthouse-check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Run Lighthouse
-      id: lighthouseCheck
-      uses: foo-software/lighthouse-check-action@master
-      with:
-        urls: 'https://www.foo.software,https://www.foo.software/contact'
-    - name: Handle Lighthouse Check results
-      uses: foo-software/lighthouse-check-status-action@master
-      with:
-        lighthouse-check-results: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
-        minAccessibilityScore: 90
-        minBestPracticesScore: 50
-        minPerformanceScore: 50
-        minProgressiveWebAppScore: 50
-        minSeoScore: 50
+      - uses: actions/checkout@master
+      - name: Run Lighthouse
+        id: lighthouseCheck
+        uses: foo-software/lighthouse-check-action@master
+        with:
+          urls: 'https://www.foo.software,https://www.foo.software/contact'
+      - name: Handle Lighthouse Check results
+        uses: foo-software/lighthouse-check-status-action@master
+        with:
+          lighthouse-check-results: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+          minAccessibilityScore: 90
+          minBestPracticesScore: 50
+          minPerformanceScore: 50
+          minProgressiveWebAppScore: 50
+          minSeoScore: 50
 ```
