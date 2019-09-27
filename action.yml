@@ -1,7 +1,7 @@
 name: 'Lighthouse Check Status'
 description: 'A GitHub Action used to handle output from "foo-software/lighthouse-check-action" and determine workflow status.'
 branding:
-  icon: 'check'  
+  icon: 'zap'  
   color: 'green'
 inputs:
   lighthouseCheckResults:
