@@ -1,4 +1,4 @@
-# Lighthouse Check Results Action
+# Lighthouse Check Status Action
 
 This action is used with [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action) to determine status of running workflow. **Its main purpose is to fail the workflow if Lighthouse scores don't meet minimum requirements** as defined by inputs.
 
@@ -63,9 +63,9 @@ jobs:
       uses: ./
       with:
         lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
-        minAccessibilityScore: 50
-        minBestPracticesScore: 50
-        minPerformanceScore: 95
-        minProgressiveWebAppScore: 50
-        minSeoScore: 50
+        minAccessibilityScore: "50"
+        minBestPracticesScore: "50"
+        minPerformanceScore: "95"
+        minProgressiveWebAppScore: "50"
+        minSeoScore: "50"
 ```

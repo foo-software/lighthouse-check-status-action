@@ -18,8 +18,8 @@ jobs:
       uses: ./
       with:
         lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
-        minAccessibilityScore: 50
-        minBestPracticesScore: 50
-        minPerformanceScore: 50
-        minProgressiveWebAppScore: 50
-        minSeoScore: 50
+        minAccessibilityScore: "50"
+        minBestPracticesScore: "50"
+        minPerformanceScore: "50"
+        minProgressiveWebAppScore: "50"
+        minSeoScore: "50"
