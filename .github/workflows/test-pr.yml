@@ -12,6 +12,7 @@ jobs:
       id: lighthouseCheck
       with:
         urls: 'https://www.foo.software,https://www.foo.software/contact'
+        outputDirectory: /tmp/artifacts
     - name: Handle Lighthouse Check results
       uses: ./
       with:
