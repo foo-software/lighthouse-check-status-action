@@ -39,7 +39,7 @@ try {
       minPerformanceScore,
       minProgressiveWebAppScore,
       minSeoScore,
-      results,
+      results: results.data,
       verbose: true
     });
   }
