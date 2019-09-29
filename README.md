@@ -10,7 +10,9 @@ This action is used with [Lighthouse Check action](https://github.com/foo-softwa
 
 Each value of the inputs below can be used alone or together. If a score of any Lighthouse audit ran by [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action) is lower than the value - the workflow will fail with an error message detailing which failed and scores.
 
-### `lighthouseCheckResults` (required)
+`lighthouseCheckResults` is required or alternatively `outputDirectory`.
+
+### `lighthouseCheckResults`
 
 A results object representing results of Lighthouse audits. This comes from the output of [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action).
 
