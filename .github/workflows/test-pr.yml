@@ -16,7 +16,6 @@ jobs:
     - name: Handle Lighthouse Check results
       uses: ./
       with:
-        # lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
         outputDirectory: /tmp/artifacts
         minAccessibilityScore: 50
         minBestPracticesScore: 50
