@@ -15,7 +15,7 @@ inputs:
   minSeoScore:
     description: 'The minimum SEO Lighthouse score required.'
   outputDirectory:
-    description: 'An absolute directory path to output report. When the results object isn\'t specified, this value will need to be.'
+    description: 'An absolute directory path to output report. When the results object is not specified, this value will need to be.'
 runs:
   using: 'node12'
   main: 'index.js'
