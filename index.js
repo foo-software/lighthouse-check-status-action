@@ -1,5 +1,5 @@
 const core = require('@actions/core');
-const validateStatus = require('@foo-software/lighthouse-check');
+const { validateStatus } = require('@foo-software/lighthouse-check');
 
 const formatInput = input => {
   if (input === '') {

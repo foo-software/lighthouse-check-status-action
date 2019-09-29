@@ -1,5 +1,8 @@
 name: Test Lighthouse Check Status
-on: [push]
+on:
+  push:
+    branches: 
+      - master
 
 jobs:
   lighthouse-check:
