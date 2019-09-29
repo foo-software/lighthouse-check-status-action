@@ -34,7 +34,7 @@ const formatInput = input => {
       minProgressiveWebAppScore ||
       minSeoScore
     ) {
-      validateStatus({
+      await validateStatus({
         minAccessibilityScore,
         minBestPracticesScore,
         minPerformanceScore,
