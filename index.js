@@ -24,7 +24,12 @@ const formatInput = input => {
       core.getInput('minProgressiveWebAppScore')
     );
     const minSeoScore = formatInput(core.getInput('minSeoScore'));
-    const results = JSON.parse(core.getInput('lighthouseCheckResults'));
+    const outputDirectory = formatInput(core.getInput('outputDirectory'));
+    
+    let results = core.getInput('lighthouseCheckResults');
+    if (results) {
+      results = JSON.parse(results).data;
+    }
 
     // if we need to fail when scores are too low...
     if (
@@ -40,7 +45,8 @@ const formatInput = input => {
         minPerformanceScore,
         minProgressiveWebAppScore,
         minSeoScore,
-        results: results.data,
+        outputDirectory,
+        results,
         verbose: true
       });
     }

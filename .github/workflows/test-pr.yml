@@ -6,17 +6,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - run: mkdir /tmp/artifacts
     - name: Run Lighthouse
       uses: foo-software/lighthouse-check-action@master
       id: lighthouseCheck
       with:
         urls: 'https://www.foo.software,https://www.foo.software/contact'
-        outputDirectory: /tmp/artifacts
     - name: Handle Lighthouse Check results
       uses: ./
       with:
-        outputDirectory: /tmp/artifacts
+        lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
         minAccessibilityScore: 50
         minBestPracticesScore: 50
         minPerformanceScore: 95
