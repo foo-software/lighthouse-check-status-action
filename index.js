@@ -1,14 +1,7 @@
 const core = require('@actions/core');
+const { validateStatus } = require('@foo-software/lighthouse-check');
 
-const normalizeInput = input => {
-  if (input === 'true') {
-    return true;
-  }
-
-  if (input === 'false') {
-    return false;
-  }
-
+const formatInput = input => {
   if (input === '') {
     return undefined;
   }
@@ -16,81 +9,20 @@ const normalizeInput = input => {
   return input;
 };
 
-const getScoreFailMessage = ({ name, url, minScore, score }) => {
-  // if inputs are not specified - assume we shouldn't fail
-  if (!minScore || !score) {
-    return [];
-  }
-
-  if (Number(score) < Number(minScore)) {
-    return [
-      `${url}: ${name}: minimum score: ${minScore}, actual score: ${score}`
-    ];
-  }
-
-  return [];
-};
-
-const getFailureMessages = ({
-  minAccessibilityScore,
-  minBestPracticesScore,
-  minPerformanceScore,
-  minProgressiveWebAppScore,
-  minSeoScore,
-  results
-}) => {
-  return results.data.reduce(
-    (accumulator, current) => [
-      ...accumulator,
-      ...getScoreFailMessage({
-        name: 'Accessibility',
-        minScore: minAccessibilityScore,
-        score: current.scores.accessibility,
-        ...current
-      }),
-      ...getScoreFailMessage({
-        name: 'Best Practices',
-        minScore: minBestPracticesScore,
-        score: current.scores.bestPractices,
-        ...current
-      }),
-      ...getScoreFailMessage({
-        name: 'Performance',
-        minScore: minPerformanceScore,
-        score: current.scores.performance,
-        ...current
-      }),
-      ...getScoreFailMessage({
-        name: 'Progressive Web App',
-        minScore: minProgressiveWebAppScore,
-        score: current.scores.progressiveWebApp,
-        ...current
-      }),
-      ...getScoreFailMessage({
-        name: 'SEO',
-        minScore: minSeoScore,
-        score: current.scores.seo,
-        ...current
-      })
-    ],
-    []
-  );
-};
-
 try {
-  const minAccessibilityScore = normalizeInput(
+  const minAccessibilityScore = formatInput(
     core.getInput('minAccessibilityScore')
   );
-  const minBestPracticesScore = normalizeInput(
+  const minBestPracticesScore = formatInput(
     core.getInput('minBestPracticesScore')
   );
-  const minPerformanceScore = normalizeInput(
+  const minPerformanceScore = formatInput(
     core.getInput('minPerformanceScore')
   );
-  const minProgressiveWebAppScore = normalizeInput(
+  const minProgressiveWebAppScore = formatInput(
     core.getInput('minProgressiveWebAppScore')
   );
-  const minSeoScore = normalizeInput(core.getInput('minSeoScore'));
+  const minSeoScore = formatInput(core.getInput('minSeoScore'));
   const results = JSON.parse(core.getInput('lighthouseCheckResults'));
 
   // if we need to fail when scores are too low...
@@ -101,21 +33,15 @@ try {
     minProgressiveWebAppScore ||
     minSeoScore
   ) {
-    const failures = getFailureMessages({
+    validateStatus({
       minAccessibilityScore,
       minBestPracticesScore,
       minPerformanceScore,
       minProgressiveWebAppScore,
       minSeoScore,
-      results
+      results,
+      verbose: true
     });
-
-    // if we have scores that were below the minimum requirement
-    if (failures.length) {
-      // comma-separate error messages and remove the last comma
-      const failureMessage = failures.join('\n');
-      throw new Error(`Minimum score requirements failed:\n${failureMessage}`);
-    }
   }
 } catch (error) {
   core.setFailed(error.message);
