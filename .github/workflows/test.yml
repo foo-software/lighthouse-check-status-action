@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - run: npm install
     - name: Run Lighthouse
       uses: foo-software/lighthouse-check-action@master
       id: lighthouseCheck
