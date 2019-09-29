@@ -6,6 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+    - run: mkdir /tmp/artifacts
     - name: Run Lighthouse
       uses: foo-software/lighthouse-check-action@master
       id: lighthouseCheck
@@ -14,7 +15,8 @@ jobs:
     - name: Handle Lighthouse Check results
       uses: ./
       with:
-        lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+        # lighthouseCheckResults: ${{ steps.lighthouseCheck.outputs.lighthouseCheckResults }}
+        outputDirectory: /tmp/artifacts
         minAccessibilityScore: 50
         minBestPracticesScore: 50
         minPerformanceScore: 95
