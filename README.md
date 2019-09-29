@@ -34,6 +34,10 @@ The minimum progressive web app Lighthouse score required.
 
 The minimum SEO Lighthouse score required.
 
+### `outputDirectory`
+
+An absolute directory path to output report. When the results object isn't specified, this value will need to be.
+
 ## Example usage
 
 In the below example we use [Lighthouse Check action](https://github.com/foo-software/lighthouse-check-action) to run audits and provide results as an output utilized in the step after with this action.

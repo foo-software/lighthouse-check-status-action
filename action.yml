@@ -14,6 +14,8 @@ inputs:
     description: 'The minimum progressive web app Lighthouse score required.'
   minSeoScore:
     description: 'The minimum SEO Lighthouse score required.'
+  outputDirectory:
+    description: 'An absolute directory path to output report. When the results object is not specified, this value will need to be.'
 runs:
   using: 'node12'
   main: 'index.js'
