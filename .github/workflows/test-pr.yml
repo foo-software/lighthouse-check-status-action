@@ -10,7 +10,7 @@ jobs:
       uses: foo-software/lighthouse-check-action@master
       id: lighthouseCheck
       with:
-        urls: 'https://www.foo.software,https://www.foo.software/contact'
+        urls: 'https://www.foo.software,https://www.foo.software/tag/articles/'
     - name: Handle Lighthouse Check results
       uses: ./
       with:
