@@ -49,10 +49,6 @@ const formatInput = input => {
         results,
         verbose: true
       });
-    } else if (results.runtimeError) {
-      throw new Error(results.runtimeError);
-    } else {
-      throw new Error('All scores were missing from Lighthouse result.');
     }
   } catch (error) {
     core.setFailed(error.message);
