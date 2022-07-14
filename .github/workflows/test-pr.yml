@@ -10,7 +10,7 @@ jobs:
       uses: foo-software/lighthouse-check-action@master
       id: lighthouseCheck
       with:
-        urls: 'https://badurl'
+        urls: 'https://www.foo.software/api/mockResponse/500'
     - name: Handle Lighthouse Check results
       uses: ./
       with:
