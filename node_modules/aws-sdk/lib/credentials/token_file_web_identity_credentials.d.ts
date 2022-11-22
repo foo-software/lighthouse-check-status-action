@@ -1,6 +1,6 @@
 import {Credentials} from '../credentials';
 import {AWSError} from '../error';
-import {ConfigurationOptions} from '../config';
+import {ConfigurationOptions} from '../config-base';
 export class TokenFileWebIdentityCredentials extends Credentials {
     /**
      * Creates a new credentials object with optional configuraion.
@@ -10,5 +10,5 @@ export class TokenFileWebIdentityCredentials extends Credentials {
     /**
      * Refreshes credentials using AWS.STS.assumeRoleWithWebIdentity().
      */
-    refresh(callback: (err: AWSError) => void): void;
+    refresh(callback: (err?: AWSError) => void): void;
 }
