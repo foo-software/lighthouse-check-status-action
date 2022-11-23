@@ -1,12 +1,13 @@
 /**
- * @license Copyright 2017 Google Inc. All Rights Reserved.
+ * @license Copyright 2017 The Lighthouse Authors. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 'use strict';
 
 const Audit = require('../audit.js');
-const robotsParser = require('robots-parser');
+// TODO(esmodules): cast can be removed when this switches to import.
+const robotsParser = /** @type {typeof import('robots-parser').default} */ (/** @type {unknown} */(require('robots-parser'))); // eslint-disable-line max-len
 const URL = require('../../lib/url-shim.js');
 const MainResource = require('../../computed/main-resource.js');
 const BLOCKLIST = new Set([
@@ -24,7 +25,7 @@ const UIStrings = {
   failureTitle: 'Page is blocked from indexing',
   /** Description of a Lighthouse audit that tells the user *why* allowing search-engine crawling of their page is beneficial. This is displayed after a user expands the section to see more. No character length limits. 'Learn More' becomes link text to additional documentation. */
   description: 'Search engines are unable to include your pages in search results ' +
-      'if they don\'t have permission to crawl them. [Learn more](https://web.dev/is-crawable).',
+      'if they don\'t have permission to crawl them. [Learn more](https://web.dev/is-crawable/).',
 };
 
 const str_ = i18n.createMessageInstanceIdFn(__filename, UIStrings);
@@ -32,7 +33,7 @@ const str_ = i18n.createMessageInstanceIdFn(__filename, UIStrings);
 /**
  * Checks if given directive is a valid unavailable_after directive with a date in the past
  * @param {string} directive
- * @returns {boolean}
+ * @return {boolean}
  */
 function isUnavailable(directive) {
   const parts = directive.split(':');
@@ -49,7 +50,7 @@ function isUnavailable(directive) {
 /**
  * Returns true if any of provided directives blocks page from being indexed
  * @param {string} directives
- * @returns {boolean}
+ * @return {boolean}
  */
 function hasBlockingDirective(directives) {
   return directives.split(',')
@@ -60,7 +61,7 @@ function hasBlockingDirective(directives) {
 /**
  * Returns true if robots header specifies user agent (e.g. `googlebot: noindex`)
  * @param {string} directives
- * @returns {boolean}
+ * @return {boolean}
  */
 function hasUserAgent(directives) {
   const parts = directives.match(/^([^,:]+):/);
@@ -80,6 +81,7 @@ class IsCrawlable extends Audit {
       title: str_(UIStrings.title),
       failureTitle: str_(UIStrings.failureTitle),
       description: str_(UIStrings.description),
+      supportedModes: ['navigation'],
       requiredArtifacts: ['MetaElements', 'RobotsTxt', 'URL', 'devtoolsLogs'],
     };
   }
@@ -105,7 +107,7 @@ class IsCrawlable extends Audit {
           if (isBlocking) {
             blockingDirectives.push({
               source: {
-                type: /** @type {'node'} */ ('node'),
+                ...Audit.makeNodeItem(metaRobots.node),
                 snippet: `<meta name="robots" content="${metaRobotsContent}" />`,
               },
             });
@@ -122,10 +124,14 @@ class IsCrawlable extends Audit {
           const robotsTxt = robotsParser(robotsFileUrl.href, artifacts.RobotsTxt.content);
 
           if (!robotsTxt.isAllowed(mainResource.url)) {
+            const line = robotsTxt.getMatchingLineNumber(mainResource.url) || 1;
             blockingDirectives.push({
               source: {
-                type: /** @type {'url'} */ ('url'),
-                value: robotsFileUrl.href,
+                type: /** @type {const} */ ('source-location'),
+                url: robotsFileUrl.href,
+                urlProvider: /** @type {const} */ ('network'),
+                line: line - 1,
+                column: 0,
               },
             });
           }

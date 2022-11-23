@@ -1,12 +1,13 @@
 /**
- * @license Copyright 2016 Google Inc. All Rights Reserved.
+ * @license Copyright 2016 The Lighthouse Authors. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 'use strict';
 
+const {isUnderTest} = require('../lib/lh-env.js');
 const statistics = require('../lib/statistics.js');
-const Util = require('../report/html/renderer/util.js');
+const {Util} = require('../util-commonjs.js');
 
 const DEFAULT_PASS = 'defaultPass';
 
@@ -68,25 +69,55 @@ class Audit {
   /* eslint-enable no-unused-vars */
 
   /**
-   * Computes a clamped score between 0 and 1 based on the measured value. Score is determined by
-   * considering a log-normal distribution governed by the two control points, point of diminishing
-   * returns and the median value, and returning the percentage of sites that have higher value.
+   * Computes a score between 0 and 1 based on the measured `value`. Score is determined by
+   * considering a log-normal distribution governed by two control points (the 10th
+   * percentile value and the median value) and represents the percentage of sites that are
+   * greater than `value`.
    *
-   * @param {number} measuredValue
-   * @param {number} diminishingReturnsValue
-   * @param {number} medianValue
+   * Score characteristics:
+   * - within [0, 1]
+   * - rounded to two digits
+   * - value must meet or beat a controlPoint value to meet or exceed its percentile score:
+   *   - value > median will give a score < 0.5; value ≤ median will give a score ≥ 0.5.
+   *   - value > p10 will give a score < 0.9; value ≤ p10 will give a score ≥ 0.9.
+   * - values < p10 will get a slight boost so a score of 1 is achievable by a
+   *   `value` other than those close to 0. Scores of > ~0.99524 end up rounded to 1.
+   * @param {{median: number, p10: number}} controlPoints
+   * @param {number} value
    * @return {number}
    */
-  static computeLogNormalScore(measuredValue, diminishingReturnsValue, medianValue) {
-    const distribution = statistics.getLogNormalDistribution(
-      medianValue,
-      diminishingReturnsValue
-    );
+  static computeLogNormalScore(controlPoints, value) {
+    let percentile = statistics.getLogNormalScore(controlPoints, value);
+    // Add a boost to scores of 90+, linearly ramping from 0 at 0.9 to half a
+    // point (0.005) at 1. Expands scores in (0.9, 1] to (0.9, 1.005], so more top
+    // scores will be a perfect 1 after the two-digit `Math.floor()` rounding below.
+    if (percentile > 0.9) { // getLogNormalScore ensures `percentile` can't exceed 1.
+      percentile += 0.05 * (percentile - 0.9);
+    }
+    return Math.floor(percentile * 100) / 100;
+  }
 
-    let score = distribution.computeComplementaryPercentile(measuredValue);
-    score = Math.min(1, score);
-    score = Math.max(0, score);
-    return clampTo2Decimals(score);
+  /**
+   * This catches typos in the `key` property of a heading definition of table/opportunity details.
+   * Throws an error if any of keys referenced by headings don't exist in at least one of the items.
+   *
+   * @param {LH.Audit.Details.Table['headings']|LH.Audit.Details.Opportunity['headings']} headings
+   * @param {LH.Audit.Details.Opportunity['items']|LH.Audit.Details.Table['items']} items
+   */
+  static assertHeadingKeysExist(headings, items) {
+    // If there are no items, there's nothing to check.
+    if (!items.length) return;
+    // Only do this in tests for now.
+    if (!isUnderTest) return;
+
+    for (const heading of headings) {
+      // `null` heading key means it's a column for subrows only
+      if (heading.key === null) continue;
+
+      const key = heading.key;
+      if (items.some(item => key in item)) continue;
+      throw new Error(`"${heading.key}" is missing from items`);
+    }
   }
 
   /**
@@ -105,6 +136,8 @@ class Audit {
       };
     }
 
+    Audit.assertHeadingKeysExist(headings, results);
+
     return {
       type: 'table',
       headings: headings,
@@ -115,7 +148,7 @@ class Audit {
 
   /**
    * @param {LH.Audit.Details.List['items']} items
-   * @returns {LH.Audit.Details.List}
+   * @return {LH.Audit.Details.List}
    */
   static makeListDetails(items) {
     return {
@@ -162,7 +195,7 @@ class Audit {
   /**
    * @param {string} content
    * @param {number} maxLineLength
-   * @returns {LH.Audit.Details.SnippetValue['lines']}
+   * @return {LH.Audit.Details.SnippetValue['lines']}
    */
   static _makeSnippetLinesArray(content, maxLineLength) {
     return content.split('\n').map((line, lineIndex) => {
@@ -187,6 +220,8 @@ class Audit {
    * @return {LH.Audit.Details.Opportunity}
    */
   static makeOpportunityDetails(headings, items, overallSavingsMs, overallSavingsBytes) {
+    Audit.assertHeadingKeysExist(headings, items);
+
     return {
       type: 'opportunity',
       headings: items.length === 0 ? [] : headings,
@@ -194,6 +229,70 @@ class Audit {
       overallSavingsMs,
       overallSavingsBytes,
     };
+  }
+
+  /**
+   * @param {LH.Artifacts.NodeDetails} node
+   * @return {LH.Audit.Details.NodeValue}
+   */
+  static makeNodeItem(node) {
+    return {
+      type: 'node',
+      lhId: node.lhId,
+      path: node.devtoolsNodePath,
+      selector: node.selector,
+      boundingRect: node.boundingRect,
+      snippet: node.snippet,
+      nodeLabel: node.nodeLabel,
+    };
+  }
+
+  /**
+   * @param {LH.Artifacts.Bundle} bundle
+   * @param {number} generatedLine
+   * @param {number} generatedColumn
+   * @return {LH.Audit.Details.SourceLocationValue['original']}
+   */
+  static _findOriginalLocation(bundle, generatedLine, generatedColumn) {
+    const entry = bundle?.map.findEntry(generatedLine, generatedColumn);
+    if (!entry) return;
+
+    return {
+      file: entry.sourceURL || '',
+      line: entry.sourceLineNumber || 0,
+      column: entry.sourceColumnNumber || 0,
+    };
+  }
+
+  /**
+   * @param {string} url
+   * @param {number} line 0-indexed
+   * @param {number} column 0-indexed
+   * @param {LH.Artifacts.Bundle=} bundle
+   * @return {LH.Audit.Details.SourceLocationValue}
+   */
+  static makeSourceLocation(url, line, column, bundle) {
+    return {
+      type: 'source-location',
+      url,
+      urlProvider: 'network',
+      line,
+      column,
+      original: bundle && this._findOriginalLocation(bundle, line, column),
+    };
+  }
+
+  /**
+   * @param {LH.Artifacts.ConsoleMessage} entry
+   * @param {LH.Artifacts.Bundle=} bundle
+   * @return {LH.Audit.Details.SourceLocationValue | undefined}
+   */
+  static makeSourceLocationFromConsoleMessage(entry, bundle) {
+    if (!entry.url) return;
+
+    const line = entry.lineNumber || 0;
+    const column = entry.columnNumber || 0;
+    return this.makeSourceLocation(entry.url, line, column, bundle);
   }
 
   /**
@@ -222,8 +321,8 @@ class Audit {
 
   /**
    * @param {typeof Audit} audit
-   * @param {string} errorMessage
-   * @return {LH.Audit.Result}
+   * @param {string | LH.IcuMessage} errorMessage
+   * @return {LH.RawIcu<LH.Audit.Result>}
    */
   static generateErrorAuditResult(audit, errorMessage) {
     return Audit.generateAuditResult(audit, {
@@ -235,7 +334,7 @@ class Audit {
   /**
    * @param {typeof Audit} audit
    * @param {LH.Audit.Product} product
-   * @return {LH.Audit.Result}
+   * @return {LH.RawIcu<LH.Audit.Result>}
    */
   static generateAuditResult(audit, product) {
     if (product.score === undefined) {
@@ -263,6 +362,12 @@ class Audit {
       }
     }
 
+    // The Audit.Product type is bifurcated to enforce numericUnit accompanying numericValue;
+    // the existence of `numericUnit` is our discriminant.
+    // Make ts happy and enforce this contract programmatically by only pulling numericValue off of
+    // a `NumericProduct` type.
+    const numericProduct = 'numericUnit' in product ? product : undefined;
+
     return {
       id: audit.meta.id,
       title: auditTitle,
@@ -270,7 +375,8 @@ class Audit {
 
       score,
       scoreDisplayMode,
-      numericValue: product.numericValue,
+      numericValue: numericProduct?.numericValue,
+      numericUnit: numericProduct?.numericUnit,
 
       displayValue: product.displayValue,
       explanation: product.explanation,

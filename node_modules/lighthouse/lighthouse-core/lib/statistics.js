@@ -1,9 +1,15 @@
 /**
- * @license Copyright 2017 Google Inc. All Rights Reserved.
+ * @license Copyright 2017 The Lighthouse Authors. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 'use strict';
+
+// The exact double values for the max and min scores possible in each range.
+const MIN_PASSING_SCORE = 0.90000000000000002220446049250313080847263336181640625;
+const MAX_AVERAGE_SCORE = 0.899999999999999911182158029987476766109466552734375;
+const MIN_AVERAGE_SCORE = 0.5;
+const MAX_FAILING_SCORE = 0.499999999999999944488848768742172978818416595458984375;
 
 /**
  * Approximates the Gauss error function, the probability that a random variable
@@ -29,34 +35,53 @@ function erf(x) {
 }
 
 /**
- * Creates a log-normal distribution à la traceviewer's statistics package.
- * Specified by providing the median value, at which the score will be 0.5,
- * and the falloff, the initial point of diminishing returns where any
- * improvement in value will yield increasingly smaller gains in score. Both
- * values should be in the same units (e.g. milliseconds). See
- *   https://www.desmos.com/calculator/tx1wcjk8ch
- * for an interactive view of the relationship between these parameters and
- * the typical parameterization (location and shape) of the log-normal
- * distribution.
- * @param {number} median
- * @param {number} falloff
- * @return {{computeComplementaryPercentile: function(number): number}}
+ * Returns the score (1 - percentile) of `value` in a log-normal distribution
+ * specified by the `median` value, at which the score will be 0.5, and a 10th
+ * percentile value, at which the score will be 0.9. The score represents the
+ * amount of the distribution greater than `value`. All values should be in the
+ * same units (e.g. milliseconds). See
+ *   https://www.desmos.com/calculator/o98tbeyt1t
+ * for an interactive view of the relationship between these parameters and the
+ * typical parameterization (location and shape) of the log-normal distribution.
+ * @param {{median: number, p10: number}} parameters
+ * @param {number} value
+ * @return {number}
  */
-function getLogNormalDistribution(median, falloff) {
-  const location = Math.log(median);
+function getLogNormalScore({median, p10}, value) {
+  // Required for the log-normal distribution.
+  if (median <= 0) throw new Error('median must be greater than zero');
+  if (p10 <= 0) throw new Error('p10 must be greater than zero');
+  // Not strictly required, but if p10 > median, it flips around and becomes the p90 point.
+  if (p10 >= median) throw new Error('p10 must be less than the median');
 
-  // The "falloff" value specified the location of the smaller of the positive
-  // roots of the third derivative of the log-normal CDF. Calculate the shape
-  // parameter in terms of that value and the median.
-  const logRatio = Math.log(falloff / median);
-  const shape = Math.sqrt(1 - 3 * logRatio - Math.sqrt((logRatio - 3) * (logRatio - 3) - 8)) / 2;
+  // Non-positive values aren't in the distribution, so always 1.
+  if (value <= 0) return 1;
 
-  return {
-    computeComplementaryPercentile(x) {
-      const standardizedX = (Math.log(x) - location) / (Math.SQRT2 * shape);
-      return (1 - erf(standardizedX)) / 2;
-    },
-  };
+  // Closest double to `erfc-1(1/5)`.
+  const INVERSE_ERFC_ONE_FIFTH = 0.9061938024368232;
+
+  // Shape (σ) is `|log(p10/median) / (sqrt(2)*erfc^-1(1/5))|` and
+  // standardizedX is `1/2 erfc(log(value/median) / (sqrt(2)*σ))`, so simplify a bit.
+  const xRatio = Math.max(Number.MIN_VALUE, value / median); // value and median are > 0, so is ratio.
+  const xLogRatio = Math.log(xRatio);
+  const p10Ratio = Math.max(Number.MIN_VALUE, p10 / median); // p10 and median are > 0, so is ratio.
+  const p10LogRatio = -Math.log(p10Ratio); // negate to keep σ positive.
+  const standardizedX = xLogRatio * INVERSE_ERFC_ONE_FIFTH / p10LogRatio;
+  const complementaryPercentile = (1 - erf(standardizedX)) / 2;
+
+  // Clamp to avoid floating-point out-of-bounds issues and keep score in expected range.
+  let score;
+  if (value <= p10) {
+    // Passing. Clamp to [0.9, 1].
+    score = Math.max(MIN_PASSING_SCORE, Math.min(1, complementaryPercentile));
+  } else if (value <= median) {
+    // Average. Clamp to [0.5, 0.9).
+    score = Math.max(MIN_AVERAGE_SCORE, Math.min(MAX_AVERAGE_SCORE, complementaryPercentile));
+  } else {
+    // Failing. Clamp to [0, 0.5).
+    score = Math.max(0, Math.min(MAX_FAILING_SCORE, complementaryPercentile));
+  }
+  return score;
 }
 
 /**
@@ -75,5 +100,5 @@ function linearInterpolation(x0, y0, x1, y1, x) {
 
 module.exports = {
   linearInterpolation,
-  getLogNormalDistribution,
+  getLogNormalScore,
 };

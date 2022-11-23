@@ -1,5 +1,5 @@
 /**
- * @license Copyright 2018 Google Inc. All Rights Reserved.
+ * @license Copyright 2018 The Lighthouse Authors. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
@@ -150,7 +150,9 @@ class LanternFirstContentfulPaint extends LanternMetric {
     return dependencyGraph.cloneWithRelationships(node => {
       if (node.type === BaseNode.TYPES.NETWORK) {
         // Exclude all nodes that ended after paintTs (except for the main document which we always consider necessary)
-        if (node.endTime > paintTs && !node.isMainDocument()) return false;
+        // endTime is negative if request does not finish, make sure startTime isn't after paintTs in this case.
+        const endedAfterPaint = node.endTime > paintTs || node.startTime > paintTs;
+        if (endedAfterPaint && !node.isMainDocument()) return false;
 
         const url = node.record.url;
         // If the URL definitely wasn't render-blocking then we filter it out.
@@ -168,13 +170,13 @@ class LanternFirstContentfulPaint extends LanternMetric {
 
   /**
    * @param {Node} dependencyGraph
-   * @param {LH.Artifacts.TraceOfTab} traceOfTab
+   * @param {LH.Artifacts.ProcessedNavigation} processedNavigation
    * @return {Node}
    */
-  static getOptimisticGraph(dependencyGraph, traceOfTab) {
+  static getOptimisticGraph(dependencyGraph, processedNavigation) {
     return this.getFirstPaintBasedGraph(
       dependencyGraph,
-      traceOfTab.timestamps.firstContentfulPaint,
+      processedNavigation.timestamps.firstContentfulPaint,
       // In the optimistic graph we exclude resources that appeared to be render blocking but were
       // initiated by a script. While they typically have a very high importance and tend to have a
       // significant impact on the page's content, these resources don't technically block rendering.
@@ -184,16 +186,19 @@ class LanternFirstContentfulPaint extends LanternMetric {
 
   /**
    * @param {Node} dependencyGraph
-   * @param {LH.Artifacts.TraceOfTab} traceOfTab
+   * @param {LH.Artifacts.ProcessedNavigation} processedNavigation
    * @return {Node}
    */
-  static getPessimisticGraph(dependencyGraph, traceOfTab) {
+  static getPessimisticGraph(dependencyGraph, processedNavigation) {
     return this.getFirstPaintBasedGraph(
       dependencyGraph,
-      traceOfTab.timestamps.firstContentfulPaint,
+      processedNavigation.timestamps.firstContentfulPaint,
       node => node.hasRenderBlockingPriority()
     );
   }
 }
 
-module.exports = makeComputedArtifact(LanternFirstContentfulPaint);
+module.exports = makeComputedArtifact(
+  LanternFirstContentfulPaint,
+  ['devtoolsLog', 'gatherContext', 'settings', 'simulator', 'trace']
+);

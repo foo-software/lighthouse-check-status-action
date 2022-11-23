@@ -1,18 +1,11 @@
 /**
- * @license Copyright 2018 Google Inc. All Rights Reserved.
+ * @license Copyright 2018 The Lighthouse Authors. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 'use strict';
 
-const {
-  filterOutRectsContainedByOthers,
-  filterOutTinyRects,
-  rectsTouchOrOverlap,
-  rectContainsPoint,
-  getBoundingRect,
-  getRectCenterPoint,
-} = require('./rect-helpers.js');
+const RectHelpers = require('./rect-helpers.js');
 
 /**
  * Merge client rects together and remove small ones. This may result in a larger overall
@@ -23,8 +16,8 @@ const {
 function getTappableRectsFromClientRects(clientRects) {
   // 1x1px rect shouldn't be reason to treat the rect as something the user should tap on.
   // Often they're made invisble in some obscure way anyway, and only exist for e.g. accessibiliity.
-  clientRects = filterOutTinyRects(clientRects);
-  clientRects = filterOutRectsContainedByOthers(clientRects);
+  clientRects = RectHelpers.filterOutTinyRects(clientRects);
+  clientRects = RectHelpers.filterOutRectsContainedByOthers(clientRects);
   clientRects = mergeTouchingClientRects(clientRects);
   return clientRects;
 }
@@ -44,7 +37,7 @@ function almostEqual(a, b) {
 /**
  * Merge touching rects based on what appears as one tappable area to the user.
  * @param {LH.Artifacts.Rect[]} clientRects
- * @returns {LH.Artifacts.Rect[]}
+ * @return {LH.Artifacts.Rect[]}
  */
 function mergeTouchingClientRects(clientRects) {
   for (let i = 0; i < clientRects.length; i++) {
@@ -68,17 +61,17 @@ function mergeTouchingClientRects(clientRects) {
       const rectsLineUpVertically =
         almostEqual(crA.left, crB.left) || almostEqual(crA.right, crB.right);
       const canMerge =
-        rectsTouchOrOverlap(crA, crB) &&
+        RectHelpers.rectsTouchOrOverlap(crA, crB) &&
         (rectsLineUpHorizontally || rectsLineUpVertically);
 
       if (canMerge) {
-        const replacementClientRect = getBoundingRect([crA, crB]);
-        const mergedRectCenter = getRectCenterPoint(replacementClientRect);
+        const replacementClientRect = RectHelpers.getBoundingRect([crA, crB]);
+        const mergedRectCenter = RectHelpers.getRectCenterPoint(replacementClientRect);
 
         if (
           !(
-            rectContainsPoint(crA, mergedRectCenter) ||
-            rectContainsPoint(crB, mergedRectCenter)
+            RectHelpers.rectContainsPoint(crA, mergedRectCenter) ||
+            RectHelpers.rectContainsPoint(crB, mergedRectCenter)
           )
         ) {
           // Don't merge because the new shape is too different from the

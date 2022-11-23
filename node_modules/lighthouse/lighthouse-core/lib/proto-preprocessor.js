@@ -1,5 +1,5 @@
 /**
- * @license Copyright 2018 Google Inc. All Rights Reserved.
+ * @license Copyright 2018 The Lighthouse Authors. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
@@ -16,10 +16,10 @@ const fs = require('fs');
  */
 
 /**
-  * Transform an LHR into a proto-friendly, mostly-compatible LHR.
-  * @param {LH.Result} lhr
-  * @return {LH.Result}
-  */
+ * Transform an LHR into a proto-friendly, mostly-compatible LHR.
+ * @param {LH.Result} lhr
+ * @return {LH.Result}
+ */
 function processForProto(lhr) {
   /** @type {LH.Result} */
   const reportJson = JSON.parse(JSON.stringify(lhr));
@@ -29,10 +29,22 @@ function processForProto(lhr) {
   // 'ignore unknown fields' in the language of conversion.
   if (reportJson.configSettings) {
     // The settings that are in both proto and LHR
-    const {emulatedFormFactor, locale, onlyCategories, channel} = reportJson.configSettings;
+    const {
+      formFactor,
+      locale,
+      onlyCategories,
+      channel,
+      throttling,
+      throttlingMethod} = reportJson.configSettings;
 
-    // @ts-ignore - intentionally only a subset of settings.
-    reportJson.configSettings = {emulatedFormFactor, locale, onlyCategories, channel};
+    // @ts-expect-error - intentionally only a subset of settings.
+    reportJson.configSettings = {
+      formFactor,
+      locale,
+      onlyCategories,
+      channel,
+      throttling,
+      throttlingMethod};
   }
 
   // Remove runtimeError if it is NO_ERROR
@@ -47,7 +59,7 @@ function processForProto(lhr) {
 
       // Rewrite 'not-applicable' and 'not_applicable' scoreDisplayMode to 'notApplicable'. #6201, #6783.
       if (audit.scoreDisplayMode) {
-        // @ts-ignore ts properly flags this as invalid as it should not happen,
+        // @ts-expect-error ts properly flags this as invalid as it should not happen,
         // but remains in preprocessor to protect from proto translation errors from
         // old LHRs.
         // eslint-disable-next-line max-len
@@ -68,13 +80,8 @@ function processForProto(lhr) {
     });
   }
 
-  // Drop the i18n icuMessagePaths. Painful in proto, and low priority to expose currently.
-  if (reportJson.i18n && reportJson.i18n.icuMessagePaths) {
-    delete reportJson.i18n.icuMessagePaths;
-  }
-
-  // Remove any found empty strings, as they are dropped after round-tripping anyway
   /**
+   * Remove any found empty strings, as they are dropped after round-tripping anyway
    * @param {any} obj
    */
   function removeStrings(obj) {
@@ -100,7 +107,7 @@ function processForProto(lhr) {
   return reportJson;
 }
 
-// @ts-ignore claims always false, but this checks if cli or module
+// Test if called from the CLI or as a module.
 if (require.main === module) {
   // read in the argv for the input & output
   const args = process.argv.slice(2);

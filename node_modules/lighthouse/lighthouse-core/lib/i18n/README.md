@@ -1,7 +1,7 @@
 # Terminology
 
 * **CTC format**: The [Chrome extension & Chrome app i18n format](https://developer.chrome.com/extensions/i18n-messages) with some minor changes. JSON with their specified model for declaring placeholders, examples, etc. Used as an interchange data format.
-* **LHL syntax** (Lighthouse Localizable syntax): The ICU-friendly string syntax that is used to author `UIStrings` and is seen in the locale files in `i18n/locales/*.json`. Lighthouse has a custom syntax these strings combines many ICU message features along with some markdown.
+* **LHL syntax** (Lighthouse Localizable syntax): The ICU-friendly string syntax that is used to author `UIStrings` and is seen in the locale files in `shared/localization/locales/*.json`. Lighthouse has a custom syntax these strings combines many ICU message features along with some markdown.
 * **ICU**: ICU (International Components for Unicode) is a localization project and standard defined by the Unicode consortium. In general, we refer to "ICU" as the [ICU message formatting](http://userguide.icu-project.org/formatparse/messages) syntax.
 
 # The Lighthouse i18n pipeline
@@ -12,11 +12,11 @@ The collection and translation pipeline:
 ```
  Source files:                                         Locale files:
 +---------------------------+                         +----------------------------------------------
-|                           ++                        | lighthouse-core/lib/i18n/locales/en-US.json |
-| const UIStrings = { ... };|-+                 +---> | lighthouse-core/lib/i18n/locales/en-XL.json |
+|                           ++                        | shared/localization/locales/en-US.json |
+| const UIStrings = { ... };|-+                 +---> | shared/localization/locales/en-XL.json |
 |                           |-|                 |     +----------------------------------------------+
 +-----------------------------|                 |     |                                             ||
- +----------------------------|                 |     | lighthouse-core/lib/i18n/locales/*.json     |-<+
+ +----------------------------|                 |     | shared/localization/locales/*.json     |-<+
   +---------------------------+                 |     |                                             || |
                            |                    |     +----------------------------------------------| |
   $ yarn                   |                    |      +---------------------------------------------+ |
@@ -39,7 +39,7 @@ To a typical developer, the pipeline looks like this:
 $ yarn i18n:collect-strings
 
 # Test to see that the new translations are valid and apply to all strings
-$ node lighthouse-core/scripts/build-report-for-autodeployment.js && open dist/xl-accented/index.html
+$ yarn build-sample-reports && open dist/xl-accented/index.html
 ```
 
 Note: Why do `en-US` and `en-XL` get baked early?  We write all our strings in `en-US` by default, so they do not need to be translated, so it can be immediately baked without going to the translators.  Similarly, `en-XL` is a debugging language, it is an automated version of `en-US` that simply adds markers to `en` strings in order to make it obvious that something has or hasn't been translated.  So neither of these files need to go to translators to be used, and both can be used at develop-time to help developer i18n workflow.
@@ -71,7 +71,7 @@ See [Appendix A: How runtime string replacement works](#appendix)
 
 We want to keep strings close to the code in which they are used so that developers can easily understand their context. We use `i18n.js` to extract the `UIStrings` strings from individual js files.
 
-LHL strings in each module are defined in a `UIStrings` object with the strings as its properties. JSDoc is sometimes used to provide additional information about each string.
+LHL strings in each module are defined in a `UIStrings` object with the strings as its properties. JSDoc is used to provide additional information about each string.
 
 The LHL syntax is based primarily around the standardized [ICU message formatting](http://userguide.icu-project.org/formatparse/messages) syntax.
 
@@ -215,65 +215,59 @@ CTC is a name that is distinct and identifies this as the Chrome translation for
 
 ##  Appendix A: How runtime string replacement works
 
-1.  String called in `.js` file, converted to i18n id.
+1.  String called in `.js` file, converted to `LH.IcuMessage` object.
 
-2.  i18n id in lookup table along with backup message.
+1.  Message object is replaced with the localized string via
+    `format.replaceIcuMessages` and `format.getFormatted`.
 
-3.  Message is looked up via `replaceIcuMessageInstanceIds` &
-    `getFormatted`.
+#### Example:
 
-##### Example:
-
-1.  string in `file_with_UIStrings.js`
+1.  string in `lighthouse-core/lib/file_with_uistrings.js`
 
     ```javascript
     // Declare UIStrings
     const UIStrings = {
-      /** Description of a Lighthouse audit that tells the user ...*/
-      message: 'Minifying CSS files can reduce network payload sizes. ' +
-        '[Learn more](https://developers.google.com/web/tools/lighthouse/audits/minify-css).',
+      /** Used to summarize the total byte size of the page and.... */
+      totalSize: 'Total size was {totalBytes, number, bytes} KiB',
     };
 
     // Init the strings in this file with the i18n system.
-    const str_ = i18n.createMessageInstanceIdFn(__filename, UIStrings);
+    const str_ = i18n.createIcuMessageFn(__filename, UIStrings);
 
-    // String called with i18n
-    // Will become id like "lighthouse-core/audits/byte-efficiency/unminified-css.js | message"
-    let message = str_(UIStrings.message);
+    // Create an IcuMessage instance with a replacement value for our localizable string.
+    const icuMessage = str_(UIStrings.totalSize, {totalBytes: 10240});
     ```
 
-2.  i18n lookup map registered the string (i18n.js)
+2.  `icuMessage` contains information to localize a message into available locales, including a default fallback created from the original (non-localized) string.
 
     ```javascript
-    const _icuMessageInstanceMap = new Map();
-
-    // example value in _icuMessageInstanceMap
-    'lighthouse-core/audits/byte-efficiency/unminified-css.js | message': {
-      icuMessageId: 'lighthouse-core/audits/byte-efficiency/unminified-css.js | message'
-      icuMessage: 'Minifying CSS files can reduce network payload sizes. ' +
-        '[Learn more](https://developers.google.com/web/tools/lighthouse/audits/minify-css).'
+    // icuMessage
+    {
+      i18nId: 'lighthouse-core/lib/file_with_uistrings.js | totalSize',
+      values: {
+        totalBytes: 10240
+      },
+      formattedDefault: 'Total size was 10 KiB'
     }
     ```
 
-3.  Lookup in `i18n.js`. `replaceIcuMessageInstanceIds` and `getFormatted` will attempt to lookup in this order:
+3.  Lookup in `format.replaceIcuMessages` and `format.getFormatted` will attempt to find the message in this order:
 
-    1.  `locales/{locale}.json` The best result, the string is found in the target locale, and should appear correct.
+    1.  `locales/{locale}.json` The best result. `icuMessage.i18nId` is found in the target locale and the resulting string should appear correct.
 
-    2.  `locales/en.json` _Okay_ result. The string was not found in the target locale, but was in `en`, so show the English string.
+    2.  `locales/en-US.json` _Okay_ result. `icuMessage.i18nId` was not found in the target locale, but it was in `en-US`, so the English string is used.
 
-    3.  The fallback message passed to `_formatIcuMessage`. This lookup is subtley different than the en lookup. A string that is provided in the UIStrings, but not en may be part of a swap-locale that is using an old deprecated string, so would need to be populated by UIString replacement here instead.
-
-    4.  Throw `_ICUMsgNotFoundMsg` Error. This is preferrable to showing the user some id control lookup like "lighthouse-core/audits/byte-efficiency/unminified-css.js | description"
+    3.  The fallback message in `icuMessage.formattedDefault`. This string will be in English, but the lookup is subtly different than the `en-US` lookup. An `IcuMessage` whose `i18nId` is not in `en-US` may be part of an old set of artifacts (or an old LHR passed into `swap-locale`) that contains a string that has since been removed from Lighthouse. The `formattedDefault` is the only option in that case.
 
     This is also the point at which ICU is replaced by values. So this...
 
     ```javascript
-    message = "Total size was {totalBytes, number, bytes} KB"
-    sent_values = {totalBytes: 10240}
+    totalSize = "Total size was {totalBytes, number, bytes} KiB"
+    values = {totalBytes: 10240}
     ```
 
     Becomes...
 
     ```javascript
-    message = "Total size was 10 KB"
+    message = "Total size was 10 KiB"
     ```
