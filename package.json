@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@foo-software/lighthouse-check": "^8.0.1"
+    "@foo-software/lighthouse-check": "^8.0.2"
   },
   "devDependencies": {
     "husky": "^8.0.2",
