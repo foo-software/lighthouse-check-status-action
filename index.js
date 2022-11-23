@@ -5,7 +5,6 @@ const formatInput = input => {
   if (input === '') {
     return undefined;
   }
-
   return input;
 };
 
