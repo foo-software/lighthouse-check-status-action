@@ -17,7 +17,7 @@ inputs:
   outputDirectory:
     description: 'An absolute directory path to output report. When the results object is not specified, this value will need to be.'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'index.js'
 branding:
   icon: 'zap'  

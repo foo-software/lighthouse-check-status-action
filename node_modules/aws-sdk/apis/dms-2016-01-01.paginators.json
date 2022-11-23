@@ -1,11 +1,21 @@
 {
   "pagination": {
+    "DescribeApplicableIndividualAssessments": {
+      "input_token": "Marker",
+      "output_token": "Marker",
+      "limit_key": "MaxRecords"
+    },
     "DescribeCertificates": {
       "input_token": "Marker",
       "output_token": "Marker",
       "limit_key": "MaxRecords"
     },
     "DescribeConnections": {
+      "input_token": "Marker",
+      "output_token": "Marker",
+      "limit_key": "MaxRecords"
+    },
+    "DescribeEndpointSettings": {
       "input_token": "Marker",
       "output_token": "Marker",
       "limit_key": "MaxRecords"
@@ -28,6 +38,31 @@
     "DescribeEvents": {
       "input_token": "Marker",
       "output_token": "Marker",
+      "limit_key": "MaxRecords"
+    },
+    "DescribeFleetAdvisorCollectors": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxRecords"
+    },
+    "DescribeFleetAdvisorDatabases": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxRecords"
+    },
+    "DescribeFleetAdvisorLsaAnalysis": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxRecords"
+    },
+    "DescribeFleetAdvisorSchemaObjectSummary": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxRecords"
+    },
+    "DescribeFleetAdvisorSchemas": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
       "limit_key": "MaxRecords"
     },
     "DescribeOrderableReplicationInstances": {
@@ -56,6 +91,16 @@
       "limit_key": "MaxRecords"
     },
     "DescribeReplicationTaskAssessmentResults": {
+      "input_token": "Marker",
+      "output_token": "Marker",
+      "limit_key": "MaxRecords"
+    },
+    "DescribeReplicationTaskAssessmentRuns": {
+      "input_token": "Marker",
+      "output_token": "Marker",
+      "limit_key": "MaxRecords"
+    },
+    "DescribeReplicationTaskIndividualAssessments": {
       "input_token": "Marker",
       "output_token": "Marker",
       "limit_key": "MaxRecords"

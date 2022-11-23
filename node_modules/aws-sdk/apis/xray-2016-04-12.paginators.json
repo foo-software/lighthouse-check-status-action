@@ -13,6 +13,16 @@
       "output_token": "NextToken",
       "result_key": "Groups"
     },
+    "GetInsightEvents": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
+    "GetInsightSummaries": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
     "GetSamplingRules": {
       "input_token": "NextToken",
       "output_token": "NextToken",
@@ -54,6 +64,16 @@
       ],
       "output_token": "NextToken",
       "result_key": "TraceSummaries"
+    },
+    "ListResourcePolicies": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "result_key": "ResourcePolicies"
+    },
+    "ListTagsForResource": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "result_key": "Tags"
     }
   }
 }
