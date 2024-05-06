@@ -1,24 +1,34 @@
 /**
- * @license Copyright 2018 The Lighthouse Authors. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ * @license
+ * Copyright 2018 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-import ArbitraryEqualityMap = require('../lighthouse-core/lib/arbitrary-equality-map.js');
-import {Artifacts} from './artifacts';
-import AuditDetails from './lhr/audit-details';
-import Config from './config';
-import Gatherer from './gatherer';
-import {FormattedIcu, IcuMessage} from './lhr/i18n';
-import * as AuditResult from './lhr/audit-result';
+import {ArbitraryEqualityMap} from '../core/lib/arbitrary-equality-map.js';
+import {Artifacts} from './artifacts.js';
+import AuditDetails from './lhr/audit-details.js';
+import Config from './config.js';
+import Gatherer from './gatherer.js';
+import {IcuMessage} from './lhr/i18n.js';
+import * as AuditResult from './lhr/audit-result.js';
+import Util from './utility-types.js';
 
 declare module Audit {
   export import Details = AuditDetails;
   export type Result = AuditResult.Result;
   export type ScoreDisplayMode = AuditResult.ScoreDisplayMode;
   export type ScoreDisplayModes = AuditResult.ScoreDisplayModes;
+  export type MetricSavings = AuditResult.MetricSavings;
 
-  type Context = Immutable<{
+  export type ProductMetricSavings = {
+    FCP?: number;
+    LCP?: number;
+    TBT?: number;
+    CLS?: number;
+    INP?: number;
+  };
+
+  type Context = Util.Immutable<{
     /** audit options */
     options: Record<string, any>;
     settings: Config.Settings;
@@ -52,6 +62,8 @@ declare module Audit {
     scoreDisplayMode?: AuditResult.ScoreDisplayMode;
     /** A list of gather modes that this audit is applicable to. */
     supportedModes?: Gatherer.GatherMode[],
+    /** A number indicating how much guidance Lighthouse provides to solve the problem in this audit on a 1-3 scale. Higher means more guidance. */
+    guidanceLevel?: number;
   }
 
   interface ByteEfficiencyItem extends AuditDetails.OpportunityItem {
@@ -73,6 +85,8 @@ declare module Audit {
     explanation?: string | IcuMessage;
     /** Error message from any exception thrown while running this audit. */
     errorMessage?: string | IcuMessage;
+    /** Error stack from any exception thrown while running this audit. */
+    errorStack?: string;
     warnings?: Array<string | IcuMessage>;
     /** Overrides scoreDisplayMode with notApplicable if set to true */
     notApplicable?: boolean;
@@ -80,6 +94,12 @@ declare module Audit {
     details?: AuditDetails;
     /** If an audit encounters unusual execution circumstances, strings can be put in this optional array to add top-level warnings to the LHR. */
     runWarnings?: Array<IcuMessage>;
+    /** Estimates of how much this audit affects various performance metrics. Values will be in the unit of the respective metrics. */
+    metricSavings?: ProductMetricSavings;
+    /** Score details including p10 and median for calculating an audit's log-normal score. */
+    scoringOptions?: ScoreOptions;
+    /** A string identifying how the score should be interpreted for display. Overrides audit meta `scoreDisplayMode` if defined. */
+    scoreDisplayMode?: AuditResult.ScoreDisplayMode;
   }
 
   /** The Audit.Product type for audits that do not return a `numericValue`. */
@@ -97,16 +117,6 @@ declare module Audit {
 
   /** Type returned by Audit.audit(). Only score is required.  */
   type Product = NonNumericProduct | NumericProduct;
-
-  type MultiCheckAuditP1 = Partial<Record<Artifacts.ManifestValueCheckID, boolean>>;
-  type MultiCheckAuditP2 = Partial<Artifacts.ManifestValues>;
-  interface MultiCheckAuditP3 {
-    failures: Array<string>;
-    manifestValues?: undefined;
-    allChecks?: undefined;
-  }
-
-  type MultiCheckAuditDetails = MultiCheckAuditP1 & MultiCheckAuditP2 & MultiCheckAuditP3;
 }
 
 export default Audit;

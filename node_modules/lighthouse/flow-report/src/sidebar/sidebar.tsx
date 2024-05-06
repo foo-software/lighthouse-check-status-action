@@ -1,12 +1,12 @@
 /**
- * @license Copyright 2021 The Lighthouse Authors. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ * @license
+ * Copyright 2021 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 import {FunctionComponent} from 'preact';
 
-import {Util} from '../../../report/renderer/util';
+import {ReportUtils} from '../../../report/renderer/report-utils.js';
 import {Separator} from '../common';
 import {useI18n, useLocalizedStrings} from '../i18n/i18n';
 import {CpuIcon, EnvIcon, NetworkIcon, SummaryIcon} from '../icons';
@@ -34,7 +34,10 @@ const SidebarSummary: FunctionComponent = () => {
 const SidebarRuntimeSettings: FunctionComponent<{settings: LH.ConfigSettings}> =
 ({settings}) => {
   const strings = useLocalizedStrings();
-  const env = Util.getEmulationDescriptions(settings);
+  const env = ReportUtils.getEmulationDescriptions(settings);
+  const deviceEmulationString = env.screenEmulation ?
+    `${env.deviceEmulation} - ${env.screenEmulation}` :
+    env.deviceEmulation;
 
   return (
     <div className="SidebarRuntimeSettings">
@@ -43,7 +46,7 @@ const SidebarRuntimeSettings: FunctionComponent<{settings: LH.ConfigSettings}> =
           <EnvIcon/>
         </div>
         {
-          env.deviceEmulation
+          deviceEmulationString
         }
       </div>
       <div
@@ -74,7 +77,7 @@ const SidebarHeader: FunctionComponent<{title: string, date: string}> = ({title,
   return (
     <div className="SidebarHeader">
       <div className="SidebarHeader__title">{title}</div>
-      <div className="SidebarHeader__date">{i18n.formatDateTime(date)}</div>
+      <div className="SidebarHeader__date">{i18n.formatter.formatDateTime(date)}</div>
     </div>
   );
 };
