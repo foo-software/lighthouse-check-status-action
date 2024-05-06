@@ -1,20 +1,24 @@
 /**
- * @license Copyright 2021 The Lighthouse Authors. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ * @license
+ * Copyright 2021 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 import {createContext, FunctionComponent} from 'preact';
 import {useContext, useMemo} from 'preact/hooks';
 
 import {formatMessage} from '../../../shared/localization/format';
-import {I18n} from '../../../report/renderer/i18n';
+import {I18nFormatter} from '../../../report/renderer/i18n-formatter';
 import {UIStrings} from './ui-strings';
 import {useFlowResult} from '../util';
-import strings from './localized-strings';
-import {Util} from '../../../report/renderer/util';
+import strings from './localized-strings.js';
+import {UIStrings as ReportUIStrings} from '../../../report/renderer/report-utils.js';
+import {Globals} from '../../../report/renderer/report-globals.js';
 
-const I18nContext = createContext(new I18n('en-US', {...Util.UIStrings, ...UIStrings}));
+const I18nContext = createContext({
+  formatter: new I18nFormatter('en-US'),
+  strings: {...ReportUIStrings, ...UIStrings},
+});
 
 function useLhrLocale() {
   const flowResult = useFlowResult();
@@ -51,23 +55,24 @@ const I18nProvider: FunctionComponent = ({children}) => {
   const {locale, lhrStrings} = useLhrLocale();
 
   const i18n = useMemo(() => {
-    const i18n = new I18n(locale, {
-      // Set any missing lhr strings to default (english) values.
-      ...Util.UIStrings,
-      // Preload with strings from the first lhr.
-      // Used for legacy report components imported into the flow report.
-      ...lhrStrings,
-      // Set any missing flow strings to default (english) values.
-      ...UIStrings,
-      // `strings` is generated in build/build-report.js
-      ...strings[locale],
+    Globals.apply({
+      providedStrings: {
+        // Preload with strings from the first lhr.
+        // Used for legacy report components imported into the flow report.
+        ...lhrStrings,
+        // Set any missing flow strings to default (english) values.
+        ...UIStrings,
+        // `strings` is generated in build/build-report.js
+        ...strings[locale],
+      },
+      i18n: new I18nFormatter(locale),
+      reportJson: null,
     });
 
-    // Initialize renderer util i18n for strings rendered in wrapped components.
-    // TODO: Don't attach global i18n to `Util`.
-    Util.i18n = i18n;
-
-    return i18n;
+    return {
+      formatter: Globals.i18n,
+      strings: Globals.strings as typeof UIStrings & typeof ReportUIStrings,
+    };
   }, [locale, lhrStrings]);
 
   return (

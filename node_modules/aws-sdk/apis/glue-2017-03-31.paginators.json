@@ -10,6 +10,11 @@
       "limit_key": "MaxResults",
       "output_token": "NextToken"
     },
+    "GetColumnStatisticsTaskRuns": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
     "GetConnections": {
       "input_token": "NextToken",
       "limit_key": "MaxResults",
@@ -112,12 +117,37 @@
       "limit_key": "MaxResults",
       "output_token": "NextToken"
     },
+    "ListColumnStatisticsTaskRuns": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
     "ListCrawlers": {
       "input_token": "NextToken",
       "limit_key": "MaxResults",
       "output_token": "NextToken"
     },
     "ListCustomEntityTypes": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
+    "ListDataQualityResults": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
+    "ListDataQualityRuleRecommendationRuns": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
+    "ListDataQualityRulesetEvaluationRuns": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
+    "ListDataQualityRulesets": {
       "input_token": "NextToken",
       "limit_key": "MaxResults",
       "output_token": "NextToken"
@@ -156,6 +186,11 @@
       "result_key": "Schemas"
     },
     "ListSessions": {
+      "input_token": "NextToken",
+      "limit_key": "MaxResults",
+      "output_token": "NextToken"
+    },
+    "ListTableOptimizerRuns": {
       "input_token": "NextToken",
       "limit_key": "MaxResults",
       "output_token": "NextToken"

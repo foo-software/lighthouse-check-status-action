@@ -1,11 +1,17 @@
 /**
- * @license Copyright 2019 The Lighthouse Authors. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ * @license
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-import {IcuMessage} from './i18n';
-import Treemap from './treemap';
+import {IcuMessage} from './i18n.js';
+import Treemap from './treemap.js';
+
+/** Common properties for all details types. */
+interface BaseDetails {
+  /** Additional information, usually used for including debug or meta information in the LHR */
+  debugData?: Details.DebugData;
+}
 
 type Details =
   Details.CriticalRequestChain |
@@ -15,12 +21,11 @@ type Details =
   Details.List |
   Details.Opportunity |
   Details.Screenshot |
-  Details.FullPageScreenshot |
   Details.Table;
 
 // Details namespace.
 declare module Details {
-  interface CriticalRequestChain {
+  interface CriticalRequestChain extends BaseDetails {
     type: 'criticalrequestchain';
     longestChain: {
       duration: number;
@@ -43,7 +48,7 @@ declare module Details {
     }
   }
 
-  interface Filmstrip {
+  interface Filmstrip extends BaseDetails {
     type: 'filmstrip';
     scale: number;
     items: {
@@ -56,43 +61,42 @@ declare module Details {
     }[];
   }
 
-  interface List {
+  interface List extends BaseDetails {
     type: 'list';
     // NOTE: any `Details` type *should* be usable in `items`, but check
     // styles/report-ui-features are good before adding.
     items: Array<Table | DebugData>;
   }
 
-  interface Opportunity {
+  interface Opportunity extends BaseDetails {
     type: 'opportunity';
-    overallSavingsMs: number;
-    overallSavingsBytes?: number;
-    headings: OpportunityColumnHeading[];
+    headings: TableColumnHeading[];
     items: OpportunityItem[];
-    debugData?: DebugData;
+    /**
+     * Columns to sort the items by, during grouping.
+     * If omitted, entity groups will be sorted by the audit ordering vs. the new totals.
+     */
+    sortedBy?: Array<string>;
+    /** Will be true if the table is already grouped by entities. */
+    isEntityGrouped?: boolean;
+    /** Column keys to skip summing. If omitted, all column types supported are summed. */
+    skipSumming?: Array<string>;
+    /**
+     * @deprecated
+     * Historically this represents the time saved on the entire page load. It's mostly used as an
+     * alias for `metricSavings.LCP` now. We recommend using `metricSavings` directly for more
+     * metric-specific savings estimates.
+     */
+    overallSavingsMs?: number;
+    /** Total byte savings covered by this audit. */
+    overallSavingsBytes?: number;
   }
 
-  interface Screenshot {
+  interface Screenshot extends BaseDetails {
     type: 'screenshot';
     timing: number;
     timestamp: number;
     data: string;
-  }
-
-  /**
-   * A screenshot of the entire page, including width and height information,
-   * and the locations of interesting nodes.
-   * Used by element screenshots renderer.
-   */
-  interface FullPageScreenshot {
-    type: 'full-page-screenshot';
-    screenshot: {
-      /** Base64 image data URL. */
-      data: string;
-      width: number;
-      height: number;
-    };
-    nodes: Record<string, Rect>;
   }
 
   interface Rect {
@@ -104,7 +108,7 @@ declare module Details {
     left: number;
   }
 
-  interface Table {
+  interface Table extends BaseDetails {
     type: 'table';
     headings: TableColumnHeading[];
     items: TableItem[];
@@ -112,7 +116,15 @@ declare module Details {
       wastedMs?: number;
       wastedBytes?: number;
     };
-    debugData?: DebugData;
+    /**
+     * Columns to sort the items by, during grouping.
+     * If omitted, entity groups will be sorted by the audit ordering vs. the new totals.
+     */
+    sortedBy?: Array<string>;
+    /** Will be true if the table is already grouped by entities. */
+    isEntityGrouped?: boolean;
+    /** Column keys to skip summing. If omitted, all column types supported are summed. */
+    skipSumming?: Array<string>;
   }
 
   /** A table item for rows that are nested within a top-level TableItem (row). */
@@ -130,7 +142,7 @@ declare module Details {
     [p: string]: any;
   }
 
-  interface TreemapData {
+  interface TreemapData extends BaseDetails {
     type: 'treemap-data';
     nodes: Treemap.Node[];
   }
@@ -141,42 +153,7 @@ declare module Details {
   /** Possible types of values found within table items. */
   type ItemValue = string | number | boolean | DebugData | NodeValue | SourceLocationValue | LinkValue | UrlValue | CodeValue | NumericValue | IcuMessage | TableSubItems;
 
-  // TODO: drop TableColumnHeading, rename OpportunityColumnHeading to TableColumnHeading and
-  // use that for all table-like audit details.
-
   interface TableColumnHeading {
-    /**
-     * The name of the property within items being described.
-     * If null, subItemsHeading must be defined, and the first table row in this column for
-     * every item will be empty.
-     * See legacy-javascript for an example.
-     */
-    key: string|null;
-    /** Readable text label of the field. */
-    text: IcuMessage | string;
-    /**
-     * The data format of the column of values being described. Usually
-     * those values will be primitives rendered as this type, but the values
-     * could also be objects with their own type to override this field.
-     */
-    itemType: ItemValueType;
-    /**
-     * Optional - defines an inner table of values that correspond to this column.
-     * Key is required - if other properties are not provided, the value for the heading is used.
-     */
-    subItemsHeading?: {key: string, itemType?: ItemValueType, displayUnit?: string, granularity?: number};
-
-    displayUnit?: string;
-    granularity?: number;
-  }
-
-  interface TableItem {
-    debugData?: DebugData;
-    subItems?: TableSubItems;
-    [p: string]: undefined | ItemValue;
-  }
-
-  interface OpportunityColumnHeading {
     /**
      * The name of the property within items being described.
      * If null, subItemsHeading must be defined, and the first table row in this column for
@@ -198,9 +175,14 @@ declare module Details {
      */
     subItemsHeading?: {key: string, valueType?: ItemValueType, displayUnit?: string, granularity?: number};
 
-    // NOTE: not used by opportunity details, but used in the renderer until table/opportunity unification.
     displayUnit?: string;
     granularity?: number;
+  }
+
+  interface TableItem {
+    debugData?: DebugData;
+    subItems?: TableSubItems;
+    [p: string]: undefined | ItemValue;
   }
 
   /** A more specific table element used for `opportunity` tables. */
@@ -326,6 +308,7 @@ declare module Details {
     value: number,
     granularity?: number,
   }
+
 }
 
 export default Details;
